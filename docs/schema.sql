@@ -32,6 +32,9 @@ CREATE TABLE public.ads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id UUID REFERENCES public.brands(id) ON DELETE CASCADE,
   platform TEXT DEFAULT 'facebook' CHECK (platform IN ('facebook', 'instagram', 'tiktok', 'other')),
+  -- Source-provided id (e.g. Meta ad_archive_id) for dedup on re-sync. Null
+  -- for manual_capture ads, which have no stable upstream identifier.
+  external_id TEXT UNIQUE,
   headline TEXT,
   body_copy TEXT,
   media_url TEXT,

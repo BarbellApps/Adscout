@@ -30,6 +30,7 @@ export interface Ad {
   id: string
   brand_id: string | null
   platform: AdPlatform
+  external_id: string | null
   headline: string | null
   body_copy: string | null
   media_url: string | null

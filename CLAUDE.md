@@ -107,11 +107,11 @@ No free trial planned initially (satisfaction-guarantee model, matching category
 - [x] Credit ledger + Stripe metering (credits reset on checkout/subscription webhook events)
 - [x] Realtime team annotation (notes on generations via Supabase Realtime)
 
-### Phase 4 — Scout / Explore (full data expansion)
-- [ ] Official Graph API integration (EU + political/social/housing/employment/credit baseline)
-- [ ] Scraper worker service: headless browser automation, proxy rotation, scheduling, dedup pipeline into `ads`
-- [ ] Scout dashboard (7 views: Overview, Hooks, Landing Pages, Angles, Audiences, Selling Points, Ad Types)
-- [ ] Explore search + filters (keyword/niche/format/runtime/platform)
+### Phase 4 — Scout / Explore (full data expansion) — partial
+- [x] Brands CRUD + official Graph API integration (EU + political/social/housing/employment/credit baseline) — `/api/scout/sync`
+- [ ] Scraper worker service (`scraper-worker/`) — isolated project scaffolded (job runner, dedup/upsert path, Playwright wired to the real public Ad Library URL); the actual DOM extraction is an intentional stub — see its README for the remaining steps (selectors, proxies, rate limiting, CAPTCHA handling, a fresh ToS check before running for real)
+- [ ] Scout dashboard 7-view breakdown (Overview, Hooks, Landing Pages, Angles, Audiences, Selling Points, Ad Types) — currently a flat brand list with ad counts, not the full breakdown
+- [x] Explore keyword search over the `ads` table (basic — no niche/format/runtime filters yet)
 
 ### Phase 5 — Polish + Launch
 - [ ] Billing portal, onboarding flow
