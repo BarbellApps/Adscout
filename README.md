@@ -18,4 +18,7 @@ Run `docs/schema.sql` in the Supabase SQL editor before first use.
 
 ## Status
 
-Phase 1 (Foundation) complete: Next.js scaffold, Supabase auth + schema, Stripe plans/gating, dashboard shell with empty states for all six modules (Templates, Scout, Explore, Collections, Canvas, Settings). Scout/Explore data sourcing (Graph API + scraper worker) is Phase 4 — not yet built.
+- **Phase 1 (Foundation)** — complete: Next.js scaffold, Supabase auth + schema, Stripe plans/gating, dashboard shell.
+- **Phase 2 (Templates + Collections)** — complete: real Templates/Collections pages, API keys, Chrome extension v1 (`extension/`).
+- **Phase 3 (AI Canvas)** — mostly complete: Claude-powered script generation with credit metering and live team notes. Static ad (image) generation and the other model adapters (GPT/Gemini/Grok) aren't wired up yet.
+- **Phase 4 (Scout/Explore data sourcing)** — not started. This is the big remaining piece: the official Graph API integration plus the isolated scraper worker service described in `CLAUDE.md` §3.

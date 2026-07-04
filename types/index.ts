@@ -67,11 +67,27 @@ export interface CanvasProject {
   created_at: string
 }
 
+export interface CanvasScriptVariation {
+  hook: string
+  angle: string
+  body: string
+  cta: string
+}
+
 export interface CanvasGeneration {
   id: string
   canvas_project_id: string
   model: string
   credits_used: number
+  content: CanvasScriptVariation | null
   output_url: string | null
+  created_at: string
+}
+
+export interface CanvasGenerationNote {
+  id: string
+  canvas_generation_id: string
+  user_id: string
+  body: string
   created_at: string
 }

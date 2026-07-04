@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { getStripe } from '@/lib/stripe/client'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type Stripe from 'stripe'
 import type { PlanKey } from '@/lib/stripe/plans'
 import { PLANS } from '@/lib/stripe/plans'
+import { TIER_LIMITS } from '@/lib/utils/gates'
 
 function tierFromPriceId(priceId: string | undefined): PlanKey | 'free' {
   const entry = (Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][])
@@ -27,19 +28,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  // The Stripe signature check above is the trust boundary for this route —
+  // there is no logged-in user session, so a cookie-scoped client (subject
+  // to RLS) can never see or update other users' rows here.
+  const admin = createAdminClient()
 
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
       const userId = session.metadata?.userId
       if (userId && session.customer && session.subscription) {
-        await supabase
+        const subscription = await getStripe().subscriptions.retrieve(session.subscription as string)
+        const tier = tierFromPriceId(subscription.items.data[0]?.price.id)
+        await admin
           .from('users')
           .update({
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: session.subscription as string,
             subscription_status: 'active',
+            subscription_tier: tier,
+            canvas_credits_remaining: TIER_LIMITS[tier].canvas_credits_per_month,
           })
           .eq('id', userId)
       }
@@ -49,16 +57,18 @@ export async function POST(req: Request) {
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription
       const priceId = subscription.items.data[0]?.price.id
+      const tier = tierFromPriceId(priceId)
       const status = subscription.status === 'active' ? 'active'
         : subscription.status === 'past_due' ? 'past_due'
         : event.type === 'customer.subscription.deleted' ? 'cancelled'
         : 'inactive'
 
-      await supabase
+      await admin
         .from('users')
         .update({
-          subscription_tier: tierFromPriceId(priceId),
+          subscription_tier: tier,
           subscription_status: status,
+          canvas_credits_remaining: TIER_LIMITS[tier].canvas_credits_per_month,
         })
         .eq('stripe_customer_id', subscription.customer as string)
       break

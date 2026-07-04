@@ -81,7 +81,18 @@ CREATE TABLE public.canvas_generations (
   canvas_project_id UUID REFERENCES public.canvas_projects(id) ON DELETE CASCADE,
   model TEXT NOT NULL,
   credits_used INT DEFAULT 0,
+  -- Structured text output (hook/angle/body/cta) for script generations.
+  content JSONB,
+  -- Reserved for image/video model outputs once those adapters exist.
   output_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.canvas_generation_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  canvas_generation_id UUID REFERENCES public.canvas_generations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -115,6 +126,7 @@ ALTER TABLE public.collection_ads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.canvas_projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.canvas_generations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.canvas_generation_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users: own row" ON public.users
@@ -153,6 +165,16 @@ CREATE POLICY "Canvas generations: via own project" ON public.canvas_generations
     )
   );
 
+CREATE POLICY "Canvas generation notes: via own project" ON public.canvas_generation_notes
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.canvas_generations
+      JOIN public.canvas_projects ON canvas_projects.id = canvas_generations.canvas_project_id
+      WHERE canvas_generations.id = canvas_generation_notes.canvas_generation_id
+      AND canvas_projects.user_id = auth.uid()
+    )
+  );
+
 CREATE POLICY "Credit ledger: own data" ON public.credit_ledger
   FOR ALL USING (auth.uid() = user_id);
 
@@ -178,3 +200,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ---- REALTIME ----
+-- Powers live team annotation on Canvas generations.
+ALTER PUBLICATION supabase_realtime ADD TABLE public.canvas_generation_notes;

@@ -88,24 +88,24 @@ No free trial planned initially (satisfaction-guarantee model, matching category
 
 ## 7. BUILD SEQUENCE
 
-### Phase 1 — Foundation
-- [ ] Next.js scaffold, TypeScript strict, Tailwind v4, shadcn/ui
-- [ ] Supabase schema + RLS + auth (email/password + Google OAuth)
-- [ ] Stripe tiers + feature gating (server-side)
-- [ ] Dashboard shell: sidebar/nav, empty states per module
+### Phase 1 — Foundation ✅ COMPLETE
+- [x] Next.js scaffold, TypeScript strict, Tailwind v4, shadcn/ui
+- [x] Supabase schema + RLS + auth (email/password + Google OAuth)
+- [x] Stripe tiers + feature gating (server-side)
+- [x] Dashboard shell: sidebar/nav, empty states per module
 
-### Phase 2 — Templates + Collections (compliant data only)
-- [ ] Seed curated template library (manually sourced/tagged initially)
-- [ ] Canva/Figma export integration
-- [ ] Collections CRUD + sharing
-- [ ] Chrome extension v1 — manual single-ad capture
+### Phase 2 — Templates + Collections (compliant data only) ✅ COMPLETE
+- [x] Templates page — real Supabase query, no fabricated seed data (curation is a manual/editorial task, not automated)
+- [ ] Canva/Figma export integration (schema + UI links exist; no OAuth app registered yet)
+- [x] Collections CRUD + sharing
+- [x] Chrome extension v1 — manual single-ad capture (`extension/`)
 
-### Phase 3 — AI Canvas
-- [ ] Multi-model adapter layer (Claude, GPT, Gemini, Grok — start with Claude + one image model, expand after)
-- [ ] Script/hook generation prompts
-- [ ] Static ad variation generation
-- [ ] Credit ledger + Stripe metering
-- [ ] Realtime team annotation
+### Phase 3 — AI Canvas — mostly complete
+- [x] Claude adapter (script/hook generation) — GPT/Gemini/Grok/image-gen adapters not started
+- [x] Script/hook generation prompts
+- [ ] Static ad variation generation (image model) — needs an image-gen provider + API key
+- [x] Credit ledger + Stripe metering (credits reset on checkout/subscription webhook events)
+- [x] Realtime team annotation (notes on generations via Supabase Realtime)
 
 ### Phase 4 — Scout / Explore (full data expansion)
 - [ ] Official Graph API integration (EU + political/social/housing/employment/credit baseline)
