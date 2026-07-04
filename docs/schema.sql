@@ -93,6 +93,17 @@ CREATE TABLE public.credit_ledger (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- api_keys: for the Chrome extension. Only a SHA-256 hash of the key is
+-- stored; the plaintext key is shown to the user exactly once at creation.
+CREATE TABLE public.api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  key_hash TEXT NOT NULL UNIQUE,
+  label TEXT DEFAULT 'Chrome extension',
+  last_used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ---- ROW LEVEL SECURITY ----
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -102,6 +113,7 @@ ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.collections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.collection_ads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.canvas_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.canvas_generations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 
@@ -142,6 +154,9 @@ CREATE POLICY "Canvas generations: via own project" ON public.canvas_generations
   );
 
 CREATE POLICY "Credit ledger: own data" ON public.credit_ledger
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "API keys: own data" ON public.api_keys
   FOR ALL USING (auth.uid() = user_id);
 
 -- ---- NEW USER TRIGGER ----

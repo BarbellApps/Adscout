@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "AdScout Capture",
+  "version": "0.1.0",
+  "description": "Save any ad you see on the web straight into your AdScout collections.",
+  "permissions": ["contextMenus", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AdScout Capture"
+  }
+}
