@@ -30,10 +30,43 @@
     --muted-foreground: #75758A;
     --destructive: #F87171;
     --destructive-foreground: #450a0a;
+    --accent-foreground: #ffffff;
     --input: #14141E;
     --ring: #8B5CF6;
     --radius: 0.5rem;
   }
+}
+
+/* Tailwind v4 only generates utilities (bg-primary, text-muted-foreground,
+   bg-card, ring-ring, etc.) for tokens declared under the --color-* / --radius-*
+   namespace here — the bare --primary/--card/... vars above are just plain
+   CSS custom properties otherwise, invisible to the utility generator. Every
+   shadcn primitive (Button, Badge, Card, Input, dropdown-menu, sheet) depends
+   on this mapping existing. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
