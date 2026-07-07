@@ -11,6 +11,7 @@ import {
   Sparkles,
   Settings,
   HelpCircle,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,7 +24,7 @@ const navItems = [
   { href: '/canvas', label: 'Canvas', icon: Sparkles },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname()
 
   return (
@@ -78,6 +79,25 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="space-y-1 pt-3" style={{ borderTop: '1px solid #26263A33' }}>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden"
+            style={{
+              backgroundColor: pathname === '/admin' ? '#3a2f5c' : 'transparent',
+              color: pathname === '/admin' ? '#EDEDF5' : '#75758A',
+            }}
+            onMouseEnter={e => {
+              if (pathname !== '/admin') (e.currentTarget as HTMLElement).style.backgroundColor = '#262636'
+            }}
+            onMouseLeave={e => {
+              if (pathname !== '/admin') (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+            }}
+          >
+            <Shield className="w-5 h-5 shrink-0" style={{ color: pathname === '/admin' ? '#8B5CF6' : 'inherit' }} />
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm font-medium">Admin</span>
+          </Link>
+        )}
         <Link
           href="/settings"
           className="flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden"

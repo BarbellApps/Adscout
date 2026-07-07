@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getAnthropicClient, CANVAS_TEXT_MODEL } from '@/lib/anthropic/client'
 import { buildScriptGenerationPrompt } from '@/lib/anthropic/prompts/canvas'
 import { TIER_LIMITS } from '@/lib/utils/gates'
@@ -106,8 +107,11 @@ export async function POST(req: Request) {
 
   // Best-effort deduction after the fact — generations are already saved by
   // this point, so a failure here under-charges rather than blocking output.
+  // The users table is write-locked for the authenticated role (see migration
+  // 001), so the balance update goes through the service-role admin client.
   const newBalance = creditsRemaining - cost
-  await supabase.from('users').update({ canvas_credits_remaining: newBalance }).eq('id', user.id)
+  const admin = createAdminClient()
+  await admin.from('users').update({ canvas_credits_remaining: newBalance }).eq('id', user.id)
   await supabase.from('credit_ledger').insert({
     user_id: user.id,
     delta: -cost,

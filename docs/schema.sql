@@ -15,6 +15,7 @@ CREATE TABLE public.users (
   stripe_customer_id TEXT UNIQUE,
   stripe_subscription_id TEXT UNIQUE,
   canvas_credits_remaining INT DEFAULT 0,
+  is_admin BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -131,6 +132,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authentic
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
+-- The users table is write-locked for the authenticated role: tier,
+-- status, credits, and is_admin are privileged fields that must only be
+-- changed by server routes using the service-role key. Users can read
+-- their own row (SELECT policy below); all writes bypass RLS via service
+-- role. See migration 001.
+REVOKE INSERT, UPDATE, DELETE ON public.users FROM authenticated;
+
 -- ---- ROW LEVEL SECURITY ----
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -145,8 +153,9 @@ ALTER TABLE public.canvas_generations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.canvas_generation_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users: own row" ON public.users
-  FOR ALL USING (auth.uid() = id);
+-- SELECT only — privileged writes go through service-role server routes.
+CREATE POLICY "Users: read own row" ON public.users
+  FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Brands: own data" ON public.brands
   FOR ALL USING (auth.uid() = user_id);

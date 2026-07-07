@@ -31,6 +31,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/explore') ||
     request.nextUrl.pathname.startsWith('/collections') ||
     request.nextUrl.pathname.startsWith('/canvas') ||
+    request.nextUrl.pathname.startsWith('/admin') ||
     request.nextUrl.pathname.startsWith('/settings')
 
   if (!user && isDashboard) {

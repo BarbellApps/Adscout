@@ -13,6 +13,7 @@ export interface User {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   canvas_credits_remaining: number
+  is_admin: boolean
   created_at: string
   updated_at: string
 }

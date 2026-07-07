@@ -25,7 +25,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0B0B12' }}>
-      <Sidebar />
+      <Sidebar isAdmin={Boolean((user as User | null)?.is_admin)} />
       <TopNav user={user as User | null} />
       <main className="pt-14 pl-16 min-h-screen pb-20 lg:pb-0">
         <div className="p-6">
