@@ -1,3 +1,5 @@
+import { isMetaGraphConfigured } from '@/lib/meta/config'
+
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0'
 
 // Meta's ads_archive endpoint only reliably covers: (a) ads that reached
@@ -30,10 +32,7 @@ export async function searchAdsArchive(params: {
   pageId?: string
   countries?: string[]
 }): Promise<AdsArchiveEntry[]> {
-  const accessToken = process.env.META_GRAPH_API_ACCESS_TOKEN
-  if (!accessToken) {
-    throw new Error('META_GRAPH_API_ACCESS_TOKEN is not configured')
-  }
+  const accessToken = process.env.META_GRAPH_API_ACCESS_TOKEN!
 
   const query = new URLSearchParams({
     access_token: accessToken,

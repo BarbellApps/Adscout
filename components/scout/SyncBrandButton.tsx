@@ -5,12 +5,20 @@ import { useRouter } from 'next/navigation'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export function SyncBrandButton({ brandId }: { brandId: string }) {
+export function SyncBrandButton({
+  brandId,
+  metaConfigured,
+}: {
+  brandId: string
+  metaConfigured: boolean
+}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   async function handleSync() {
+    if (!metaConfigured) return
+
     setLoading(true)
     setMessage(null)
     const res = await fetch('/api/scout/sync', {
@@ -22,6 +30,14 @@ export function SyncBrandButton({ brandId }: { brandId: string }) {
     setLoading(false)
     setMessage(res.ok ? `Synced ${data.synced} ads` : data.error ?? 'Sync failed')
     router.refresh()
+  }
+
+  if (!metaConfigured) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Meta API token missing locally. Copy <code className="font-mono">META_GRAPH_API_ACCESS_TOKEN</code> from Vercel into <code className="font-mono">.env.local</code>, then restart the dev server.
+      </p>
+    )
   }
 
   return (

@@ -6,6 +6,7 @@ import { NewBrandButton } from '@/components/scout/NewBrandButton'
 import { SyncBrandButton } from '@/components/scout/SyncBrandButton'
 import { RemoveBrandButton } from '@/components/scout/RemoveBrandButton'
 import { createClient } from '@/lib/supabase/server'
+import { isMetaGraphConfigured } from '@/lib/meta/config'
 import { TIER_LIMITS } from '@/lib/utils/gates'
 import type { SubscriptionTier } from '@/types'
 
@@ -29,6 +30,7 @@ export default async function ScoutPage() {
   const tier = (profile?.subscription_tier ?? 'free') as SubscriptionTier
   const limit = TIER_LIMITS[tier].scout_brand_limit
   const hasScout = limit !== 0
+  const metaConfigured = isMetaGraphConfigured()
 
   const { data: brands } = user
     ? await supabase
@@ -71,7 +73,16 @@ export default async function ScoutPage() {
           action={{ label: 'Track a brand' }}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <>
+          {!metaConfigured && (
+            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              Scout sync needs a Meta Ad Library access token. Add{' '}
+              <code className="font-mono text-xs">META_GRAPH_API_ACCESS_TOKEN</code> to{' '}
+              <code className="font-mono text-xs">.env.local</code> (copy from Vercel → adscout → Environment Variables), then restart{' '}
+              <code className="font-mono text-xs">npm run dev</code>.
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {rows.map((b) => (
             <Card key={b.id}>
               <CardContent className="space-y-2">
@@ -83,11 +94,12 @@ export default async function ScoutPage() {
                   <RemoveBrandButton brandId={b.id} />
                 </div>
                 <p className="text-xs text-muted-foreground">{b.ads?.[0]?.count ?? 0} ads synced</p>
-                <SyncBrandButton brandId={b.id} />
+                <SyncBrandButton brandId={b.id} metaConfigured={metaConfigured} />
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

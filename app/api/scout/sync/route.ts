@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { searchAdsArchive, mapPlatform } from '@/lib/meta/graph-api'
+import { isMetaGraphConfigured } from '@/lib/meta/config'
 import { TIER_LIMITS } from '@/lib/utils/gates'
 import type { SubscriptionTier } from '@/types'
 
@@ -43,6 +44,13 @@ export async function POST(req: Request) {
 
   if (!brand) {
     return NextResponse.json({ error: 'Brand not found' }, { status: 404 })
+  }
+
+  if (!isMetaGraphConfigured()) {
+    return NextResponse.json(
+      { error: 'Meta Ad Library API is not configured. Add META_GRAPH_API_ACCESS_TOKEN to your environment.' },
+      { status: 503 }
+    )
   }
 
   let entries
