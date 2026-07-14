@@ -49,7 +49,7 @@ export default async function CanvasProjectPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">{project.name}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Generate ad script variations and leave notes for your team.
         </p>

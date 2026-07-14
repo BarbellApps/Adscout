@@ -15,7 +15,7 @@ export default async function AdminPage() {
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">Admin</span>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Admin</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">Admin</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage users, subscriptions, and Canvas credits across the workspace.
         </p>

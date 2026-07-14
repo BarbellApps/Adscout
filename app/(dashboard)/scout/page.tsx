@@ -49,7 +49,7 @@ export default async function ScoutPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">Scout</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Competitor Scout</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight text-foreground">Competitor Scout</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track competitor brands and sync their Meta ad activity via the official Ad Library API.
             {limit > 0 && ` Your plan tracks up to ${limit} brands.`}

@@ -40,7 +40,7 @@ export default async function CollectionDetailPage({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">{collection.name}</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">{collection.name}</h1>
         <p className="text-sm text-muted-foreground mt-1">{rows.length} saved ads</p>
       </div>
 

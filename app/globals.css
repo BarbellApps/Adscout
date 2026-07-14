@@ -2,37 +2,45 @@
 
 @layer base {
   :root {
-    --background: #0B0B12;
-    --foreground: #EDEDF5;
-    --surface: #14141E;
-    --surface-raised: #1D1D2A;
-    --surface-high: #262636;
-    --border: #26263A;
-    --border-muted: #3A3A4D;
-    --accent: #8B5CF6;
-    --accent-dim: #A78BFA;
-    --success: #22C55E;
-    --warning: #F59E0B;
-    --danger: #F87171;
-    --text-primary: #EDEDF5;
-    --text-secondary: #B4B4C4;
-    --text-muted: #75758A;
+    --background: #F7F8FA;
+    --foreground: #111827;
+    --surface: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --surface-high: #F3F4F6;
+    --border: #E5E7EB;
+    --border-muted: #EDEEF1;
+    --accent: #635BFF;
+    --accent-dim: #8B85FF;
+    --success: #12A66A;
+    --warning: #E59A18;
+    --danger: #D64545;
+    --text-primary: #111827;
+    --text-secondary: #667085;
+    --text-muted: #98A2B3;
+    /* Sidebar — the app chrome stays on a dark surface even in the light theme */
+    --sidebar-bg: #08111F;
+    --sidebar-bg-secondary: #0D1828;
+    --sidebar-border: #16233A;
+    --sidebar-text: #8B96A8;
+    --sidebar-text-active: #FFFFFF;
+    --sidebar-active-bg: #1B2340;
     /* shadcn compat */
-    --card: #14141E;
-    --card-foreground: #EDEDF5;
-    --popover: #1D1D2A;
-    --popover-foreground: #EDEDF5;
-    --primary: #8B5CF6;
+    --card: #FFFFFF;
+    --card-foreground: #111827;
+    --popover: #FFFFFF;
+    --popover-foreground: #111827;
+    --primary: #635BFF;
+    --primary-hover: #5147E5;
     --primary-foreground: #ffffff;
-    --secondary: #1D1D2A;
-    --secondary-foreground: #EDEDF5;
-    --muted: #1D1D2A;
-    --muted-foreground: #75758A;
-    --destructive: #F87171;
-    --destructive-foreground: #450a0a;
+    --secondary: #F3F4F6;
+    --secondary-foreground: #111827;
+    --muted: #F3F4F6;
+    --muted-foreground: #667085;
+    --destructive: #D64545;
+    --destructive-foreground: #ffffff;
     --accent-foreground: #ffffff;
-    --input: #14141E;
-    --ring: #8B5CF6;
+    --input: #E5E7EB;
+    --ring: #635BFF;
     --radius: 0.5rem;
   }
 }
@@ -76,24 +84,24 @@
   body {
     background-color: var(--background);
     color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-geist-sans), 'Inter', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0d0d16;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #26263A;
-    border-radius: 2px;
+    background: #D0D5DD;
+    border-radius: 3px;
   }
 }
 
 .accent-border {
-  border-left: 2px solid #8B5CF6;
+  border-left: 2px solid #635BFF;
 }
 
 .font-mono {

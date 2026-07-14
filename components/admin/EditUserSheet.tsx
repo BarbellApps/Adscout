@@ -18,9 +18,9 @@ const TIERS: SubscriptionTier[] = ['free', 'starter', 'premium', 'pro']
 const STATUSES: SubscriptionStatus[] = ['active', 'inactive', 'cancelled', 'past_due']
 
 const selectStyle = {
-  backgroundColor: '#0B0B12',
-  border: '1px solid #26263A',
-  color: '#EDEDF5',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid #E5E7EB',
+  color: '#111827',
 }
 
 export function EditUserSheet({
@@ -76,7 +76,7 @@ export function EditUserSheet({
               id="tier"
               value={tier}
               onChange={(e) => setTier(e.target.value as SubscriptionTier)}
-              className="w-full h-8 rounded-lg px-2.5 text-sm outline-none"
+              className="w-full h-10 rounded-lg px-3 text-sm outline-none"
               style={selectStyle}
             >
               {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -92,7 +92,7 @@ export function EditUserSheet({
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value as SubscriptionStatus)}
-              className="w-full h-8 rounded-lg px-2.5 text-sm outline-none"
+              className="w-full h-10 rounded-lg px-3 text-sm outline-none"
               style={selectStyle}
             >
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -110,12 +110,12 @@ export function EditUserSheet({
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: '#EDEDF5' }}>
+          <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: '#111827' }}>
             <input
               type="checkbox"
               checked={isAdmin}
               onChange={(e) => setIsAdmin(e.target.checked)}
-              style={{ accentColor: '#8B5CF6' }}
+              style={{ accentColor: '#635BFF' }}
             />
             Admin access
           </label>

@@ -10,127 +10,159 @@ import {
   Bookmark,
   Sparkles,
   Settings,
-  HelpCircle,
   Shield,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { TIER_LIMITS } from '@/lib/utils/gates'
+import type { SubscriptionTier, User } from '@/types'
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+interface NavItem {
+  href: string
+  label: string
+  icon: typeof BarChart3
+}
+
+const discoverItems: NavItem[] = [
   { href: '/templates', label: 'Templates', icon: LayoutTemplate },
-  { href: '/scout', label: 'Scout', icon: Radar },
   { href: '/explore', label: 'Explore', icon: Compass },
-  { href: '/collections', label: 'Collections', icon: Bookmark },
-  { href: '/canvas', label: 'Canvas', icon: Sparkles },
+  { href: '/scout', label: 'Scout', icon: Radar },
 ]
 
-export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
+const organizeItems: NavItem[] = [
+  { href: '/collections', label: 'Collections', icon: Bookmark },
+]
+
+const createItems: NavItem[] = [
+  { href: '/canvas', label: 'AI Canvas', icon: Sparkles },
+]
+
+function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors"
+      style={{
+        backgroundColor: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
+        color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)',
+      }}
+      onMouseEnter={e => {
+        if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--sidebar-bg-secondary)'
+      }}
+      onMouseLeave={e => {
+        if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+      }}
+    >
+      <item.icon className="w-4 h-4 shrink-0" style={{ color: isActive ? '#8B85FF' : 'inherit' }} />
+      <span className="truncate">{item.label}</span>
+    </Link>
+  )
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className="px-2.5 mt-5 mb-1.5 text-[10px] font-semibold uppercase tracking-widest"
+      style={{ color: 'var(--sidebar-text)', opacity: 0.6 }}
+    >
+      {children}
+    </p>
+  )
+}
+
+export function Sidebar({ isAdmin = false, user = null }: { isAdmin?: boolean; user?: User | null }) {
   const pathname = usePathname()
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-16 hover:w-60 transition-all duration-200 ease-in-out z-50 flex flex-col py-4 px-2 group"
-      style={{ backgroundColor: '#1D1D2A', borderRight: '1px solid #26263A' }}>
+  const tier = (user?.subscription_tier ?? 'free') as SubscriptionTier
+  const creditsTotal = TIER_LIMITS[tier].canvas_credits_per_month
+  const creditsRemaining = user?.canvas_credits_remaining ?? 0
+  const creditsPct = creditsTotal > 0 ? Math.max(0, Math.min(100, (creditsRemaining / creditsTotal) * 100)) : 0
 
+  const initials = user?.full_name
+    ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.slice(0, 2).toUpperCase() ?? 'U'
+
+  return (
+    <aside
+      className="fixed left-0 top-0 h-full hidden lg:flex flex-col z-50"
+      style={{ width: '220px', backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-6 px-1 overflow-hidden">
-        <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
-          style={{ backgroundColor: '#8B5CF6' }}>
+      <div className="flex items-center gap-2.5 px-4 h-14 shrink-0" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#635BFF' }}>
           <Radar className="w-4 h-4 text-white" />
         </div>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap overflow-hidden">
-          <p className="text-sm font-semibold leading-none" style={{ color: '#EDEDF5' }}>AdScout</p>
-          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#75758A' }}>Ad Intelligence</p>
-        </div>
+        <p className="text-sm font-semibold" style={{ color: 'var(--sidebar-text-active)' }}>AdScout</p>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden',
-                isActive
-                  ? 'text-white'
-                  : 'hover:text-white'
-              )}
-              style={{
-                backgroundColor: isActive ? '#3a2f5c' : 'transparent',
-                color: isActive ? '#EDEDF5' : '#75758A',
-              }}
-              onMouseEnter={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = '#262636'
-              }}
-              onMouseLeave={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-              }}
-            >
-              <item.icon className="w-5 h-5 shrink-0" style={{ color: isActive ? '#8B5CF6' : 'inherit' }} />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm font-medium">
-                {item.label}
-              </span>
-            </Link>
-          )
-        })}
+      <nav className="flex-1 overflow-y-auto px-2.5 pb-3">
+        <div className="mt-3">
+          <NavLink item={{ href: '/dashboard', label: 'Dashboard', icon: BarChart3 }} isActive={pathname === '/dashboard'} />
+        </div>
+
+        <SectionLabel>Discover</SectionLabel>
+        <div className="space-y-0.5">
+          {discoverItems.map((item) => (
+            <NavLink key={item.href} item={item} isActive={pathname === item.href || pathname.startsWith(item.href + '/')} />
+          ))}
+        </div>
+
+        <SectionLabel>Organize</SectionLabel>
+        <div className="space-y-0.5">
+          {organizeItems.map((item) => (
+            <NavLink key={item.href} item={item} isActive={pathname === item.href || pathname.startsWith(item.href + '/')} />
+          ))}
+        </div>
+
+        <SectionLabel>Create</SectionLabel>
+        <div className="space-y-0.5">
+          {createItems.map((item) => (
+            <NavLink key={item.href} item={item} isActive={pathname === item.href || pathname.startsWith(item.href + '/')} />
+          ))}
+        </div>
       </nav>
 
+      {/* AI Credits widget */}
+      {tier !== 'free' && (
+        <div className="mx-2.5 mb-3 p-3 rounded-xl" style={{ backgroundColor: 'var(--sidebar-bg-secondary)', border: '1px solid var(--sidebar-border)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-medium" style={{ color: 'var(--sidebar-text)' }}>AI Credits</span>
+            <span className="text-[11px] font-mono" style={{ color: 'var(--sidebar-text-active)' }}>{creditsRemaining}/{creditsTotal}</span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="h-full rounded-full" style={{ width: `${creditsPct}%`, backgroundColor: '#635BFF' }} />
+          </div>
+        </div>
+      )}
+
       {/* Bottom */}
-      <div className="space-y-1 pt-3" style={{ borderTop: '1px solid #26263A33' }}>
+      <div className="px-2.5 pb-2.5 space-y-0.5" style={{ borderTop: '1px solid var(--sidebar-border)', paddingTop: '10px' }}>
         {isAdmin && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden"
-            style={{
-              backgroundColor: pathname === '/admin' ? '#3a2f5c' : 'transparent',
-              color: pathname === '/admin' ? '#EDEDF5' : '#75758A',
-            }}
-            onMouseEnter={e => {
-              if (pathname !== '/admin') (e.currentTarget as HTMLElement).style.backgroundColor = '#262636'
-            }}
-            onMouseLeave={e => {
-              if (pathname !== '/admin') (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-            }}
-          >
-            <Shield className="w-5 h-5 shrink-0" style={{ color: pathname === '/admin' ? '#8B5CF6' : 'inherit' }} />
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm font-medium">Admin</span>
-          </Link>
+          <NavLink item={{ href: '/admin', label: 'Admin', icon: Shield }} isActive={pathname === '/admin'} />
         )}
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden"
-          style={{ color: '#75758A' }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = '#262636'
-            ;(e.currentTarget as HTMLElement).style.color = '#EDEDF5'
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-            ;(e.currentTarget as HTMLElement).style.color = '#75758A'
-          }}
-        >
-          <Settings className="w-5 h-5 shrink-0" />
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm font-medium">Settings</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all duration-200 overflow-hidden"
-          style={{ color: '#75758A' }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = '#262636'
-            ;(e.currentTarget as HTMLElement).style.color = '#EDEDF5'
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-            ;(e.currentTarget as HTMLElement).style.color = '#75758A'
-          }}
-        >
-          <HelpCircle className="w-5 h-5 shrink-0" />
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm font-medium">Support</span>
-        </Link>
+        <NavLink item={{ href: '/settings', label: 'Settings', icon: Settings }} isActive={pathname.startsWith('/settings')} />
       </div>
+
+      {/* User profile footer */}
+      <Link
+        href="/settings"
+        className="flex items-center gap-2.5 px-3 py-3 shrink-0 transition-colors"
+        style={{ borderTop: '1px solid var(--sidebar-border)' }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--sidebar-bg-secondary)')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+      >
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold"
+          style={{ backgroundColor: '#635BFF33', color: '#8B85FF' }}
+        >
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium truncate" style={{ color: 'var(--sidebar-text-active)' }}>
+            {user?.full_name ?? 'Account'}
+          </p>
+          <p className="text-[11px] truncate" style={{ color: 'var(--sidebar-text)' }}>{user?.email}</p>
+        </div>
+      </Link>
     </aside>
   )
 }

@@ -69,7 +69,7 @@ export default function IntegrationsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Integrations</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">Integrations</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Connect the AdScout Chrome extension. Canva and Figma export are coming in a later phase.
         </p>

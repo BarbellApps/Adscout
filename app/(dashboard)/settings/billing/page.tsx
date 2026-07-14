@@ -26,7 +26,7 @@ export default async function BillingPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Billing</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">Billing</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your subscription plan and Canvas credit usage
         </p>

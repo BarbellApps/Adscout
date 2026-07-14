@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { LogOut, Bell, User } from 'lucide-react'
+import { LogOut, Bell, User, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   DropdownMenu,
@@ -15,10 +15,9 @@ import type { User as AppUser } from '@/types'
 
 interface TopNavProps {
   user: AppUser | null
-  title?: string
 }
 
-export function TopNav({ user, title = 'Dashboard' }: TopNavProps) {
+export function TopNav({ user }: TopNavProps) {
   const router = useRouter()
 
   async function handleSignOut() {
@@ -28,48 +27,59 @@ export function TopNav({ user, title = 'Dashboard' }: TopNavProps) {
     router.refresh()
   }
 
+  function handleSearchSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const q = new FormData(e.currentTarget).get('q')
+    if (q) router.push(`/explore?q=${encodeURIComponent(q as string)}`)
+  }
+
   const initials = user?.full_name
     ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.slice(0, 2).toUpperCase() ?? 'U'
 
   return (
     <header
-      className="fixed top-0 right-0 z-40 h-14 flex items-center justify-between px-6"
-      style={{
-        left: '64px',
-        backgroundColor: '#0B0B12',
-        borderBottom: '1px solid #26263A',
-      }}
+      className="fixed top-0 right-0 left-0 lg:left-[220px] z-40 h-14 flex items-center justify-between gap-4 px-4 sm:px-6"
+      style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}
     >
-      {/* Left: page title + version badge */}
-      <div className="flex items-center gap-3">
-        <h2 className="text-base font-semibold" style={{ color: '#EDEDF5' }}>{title}</h2>
-        <span
-          className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-widest font-mono"
-          style={{ backgroundColor: '#1D1D2A', color: '#75758A', border: '1px solid #26263A' }}
-        >
-          Beta
-        </span>
-      </div>
+      {/* Left: search */}
+      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#98A2B3' }} />
+          <input
+            name="q"
+            type="text"
+            placeholder="Search ads, brands, keywords..."
+            className="w-full h-9 pl-9 pr-14 rounded-lg text-sm outline-none transition-colors"
+            style={{ backgroundColor: '#F7F8FA', border: '1px solid #E5E7EB', color: '#111827' }}
+          />
+          <kbd
+            className="hidden sm:flex items-center absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', color: '#98A2B3' }}
+          >
+            ⌘K
+          </kbd>
+        </div>
+      </form>
 
       {/* Right: bell + avatar */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-          style={{ color: '#75758A' }}
-          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1D1D2A')}
+          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+          style={{ color: '#667085' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F3F4F6')}
           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
-          <Bell className="w-4 h-4" />
+          <Bell className="w-[18px] h-[18px]" />
         </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger className="rounded-full outline-none">
-            <Avatar className="h-7 w-7 cursor-pointer">
+            <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarImage src={user?.avatar_url ?? ''} />
               <AvatarFallback
                 className="text-xs font-medium"
-                style={{ backgroundColor: '#8B5CF622', color: '#8B5CF6' }}
+                style={{ backgroundColor: '#EEF2FF', color: '#635BFF' }}
               >
                 {initials}
               </AvatarFallback>
@@ -78,16 +88,16 @@ export function TopNav({ user, title = 'Dashboard' }: TopNavProps) {
           <DropdownMenuContent
             align="end"
             className="w-48"
-            style={{ backgroundColor: '#1D1D2A', border: '1px solid #26263A' }}
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
           >
             <DropdownMenuItem className="text-xs opacity-60 cursor-default" disabled>
               {user?.email}
             </DropdownMenuItem>
-            <DropdownMenuSeparator style={{ backgroundColor: '#26263A' }} />
+            <DropdownMenuSeparator style={{ backgroundColor: '#E5E7EB' }} />
             <DropdownMenuItem
               onClick={() => router.push('/settings')}
               className="cursor-pointer text-sm"
-              style={{ color: '#EDEDF5' }}
+              style={{ color: '#111827' }}
             >
               <User className="w-4 h-4 mr-2" />
               Settings
@@ -95,7 +105,7 @@ export function TopNav({ user, title = 'Dashboard' }: TopNavProps) {
             <DropdownMenuItem
               onClick={handleSignOut}
               className="cursor-pointer text-sm"
-              style={{ color: '#F87171' }}
+              style={{ color: '#D64545' }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign out

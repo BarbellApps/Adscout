@@ -35,7 +35,7 @@ export default async function ExplorePage({
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">Explore</span>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Explore Ads</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-foreground">Explore Ads</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Search ads synced via Scout or captured with the Chrome extension.
         </p>
