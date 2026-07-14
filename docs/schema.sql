@@ -46,6 +46,16 @@ CREATE TABLE public.ads (
   last_seen TIMESTAMPTZ DEFAULT NOW(),
   runtime_days INT DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT true,
+  -- DSA transparency fields, present for EU-reaching ads via graph_api
+  eu_total_reach INT,
+  target_ages JSONB,
+  target_gender TEXT,
+  target_locations JSONB,
+  languages JSONB,
+  link_caption TEXT,
+  link_description TEXT,
+  demographic_breakdown JSONB,
+  publisher_platforms JSONB,
   source TEXT DEFAULT 'manual_capture' CHECK (source IN ('graph_api', 'manual_capture', 'scraped')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

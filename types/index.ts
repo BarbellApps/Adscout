@@ -27,6 +27,24 @@ export interface Brand {
   added_at: string
 }
 
+export interface TargetLocation {
+  name: string
+  type: string
+  excluded: boolean
+}
+
+export interface AgeGenderBreakdown {
+  age_range: string
+  male?: number
+  female?: number
+  unknown?: number
+}
+
+export interface CountryDemographic {
+  country: string
+  age_gender_breakdowns: AgeGenderBreakdown[]
+}
+
 export interface Ad {
   id: string
   brand_id: string | null
@@ -42,6 +60,15 @@ export interface Ad {
   last_seen: string
   runtime_days: number
   is_active: boolean
+  eu_total_reach: number | null
+  target_ages: string[] | null
+  target_gender: string | null
+  target_locations: TargetLocation[] | null
+  languages: string[] | null
+  link_caption: string | null
+  link_description: string | null
+  demographic_breakdown: CountryDemographic[] | null
+  publisher_platforms: string[] | null
   source: AdSource
   created_at: string
 }

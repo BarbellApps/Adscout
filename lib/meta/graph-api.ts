@@ -19,10 +19,21 @@ export interface AdsArchiveEntry {
   ad_creative_bodies?: string[]
   ad_creative_link_titles?: string[]
   ad_creative_link_captions?: string[]
+  ad_creative_link_descriptions?: string[]
   ad_delivery_start_time?: string
   ad_delivery_stop_time?: string
   ad_snapshot_url?: string
   publisher_platforms?: string[]
+  // DSA transparency fields — populated for EU-reaching ads
+  eu_total_reach?: number
+  target_ages?: string[]
+  target_gender?: string
+  target_locations?: { name: string; type: string; excluded: boolean }[]
+  languages?: string[]
+  age_country_gender_reach_breakdown?: {
+    country: string
+    age_gender_breakdowns: { age_range: string; male?: number; female?: number; unknown?: number }[]
+  }[]
 }
 
 interface AdsArchiveResponse {
@@ -63,10 +74,17 @@ export async function searchAdsArchive(params: {
       'ad_creative_bodies',
       'ad_creative_link_titles',
       'ad_creative_link_captions',
+      'ad_creative_link_descriptions',
       'ad_delivery_start_time',
       'ad_delivery_stop_time',
       'ad_snapshot_url',
       'publisher_platforms',
+      'eu_total_reach',
+      'target_ages',
+      'target_gender',
+      'target_locations',
+      'languages',
+      'age_country_gender_reach_breakdown',
     ].join(','),
   })
 

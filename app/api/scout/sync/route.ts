@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { searchAdsArchive, mapPlatform } from '@/lib/meta/graph-api'
 import { isMetaGraphConfigured } from '@/lib/meta/config'
+import { enrichAds } from '@/lib/anthropic/enrich'
 import { TIER_LIMITS } from '@/lib/utils/gates'
 import type { SubscriptionTier } from '@/types'
 
@@ -82,6 +84,15 @@ export async function POST(req: Request) {
     runtime_days: runtimeDays(entry.ad_delivery_start_time, entry.ad_delivery_stop_time),
     // Meta omits ad_delivery_stop_time for ads that are still running.
     is_active: !entry.ad_delivery_stop_time,
+    eu_total_reach: entry.eu_total_reach ?? null,
+    target_ages: entry.target_ages ?? null,
+    target_gender: entry.target_gender ?? null,
+    target_locations: entry.target_locations ?? null,
+    languages: entry.languages ?? null,
+    link_caption: entry.ad_creative_link_captions?.[0] ?? null,
+    link_description: entry.ad_creative_link_descriptions?.[0] ?? null,
+    demographic_breakdown: entry.age_country_gender_reach_breakdown ?? null,
+    publisher_platforms: entry.publisher_platforms ?? null,
     source: 'graph_api' as const,
   }))
 
@@ -94,5 +105,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ synced: rows.length })
+  // AI enrichment: extract hook/angle/CTA from the ad copy for ads that
+  // don't have it yet. One batched Claude call; failures never fail the sync.
+  const { data: unenriched } = await supabase
+    .from('ads')
+    .select('id, headline, body_copy')
+    .eq('brand_id', brand.id)
+    .is('hook', null)
+    .not('body_copy', 'is', null)
+    .limit(50)
+
+  let enriched = 0
+  if (unenriched && unenriched.length > 0) {
+    const enrichments = await enrichAds(
+      unenriched.map((a) => ({ id: a.id, headline: a.headline, body: a.body_copy }))
+    )
+    if (enrichments.length > 0) {
+      // ads has no UPDATE grant for authenticated on these rows via RLS
+      // ownership chain, and enrichment writes are server-derived — use the
+      // service-role client like other privileged writes.
+      const admin = createAdminClient()
+      await Promise.all(
+        enrichments.map((e) =>
+          admin.from('ads').update({ hook: e.hook, angle: e.angle, cta: e.cta }).eq('id', e.id)
+        )
+      )
+      enriched = enrichments.length
+    }
+  }
+
+  return NextResponse.json({ synced: rows.length, enriched })
 }
