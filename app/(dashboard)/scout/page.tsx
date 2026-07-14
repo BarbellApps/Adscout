@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Radar } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card, CardContent } from '@/components/ui/card'
@@ -87,13 +88,15 @@ export default async function ScoutPage() {
             <Card key={b.id}>
               <CardContent className="space-y-2">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{b.page_name}</p>
+                  <Link href={`/scout/${b.id}`} className="min-w-0 group/link">
+                    <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors">{b.page_name}</p>
                     <Badge variant="outline" className="mt-1">{b.platform}</Badge>
-                  </div>
+                  </Link>
                   <RemoveBrandButton brandId={b.id} />
                 </div>
-                <p className="text-xs text-muted-foreground">{b.ads?.[0]?.count ?? 0} ads synced</p>
+                <Link href={`/scout/${b.id}`} className="text-xs text-muted-foreground hover:text-primary block">
+                  {b.ads?.[0]?.count ?? 0} ads synced &rarr;
+                </Link>
                 <SyncBrandButton brandId={b.id} metaConfigured={metaConfigured} />
               </CardContent>
             </Card>
