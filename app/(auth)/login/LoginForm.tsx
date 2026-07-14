@@ -11,18 +11,14 @@ export default function LoginForm() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => {
+    const callbackError = searchParams.get('error')
+    return callbackError ? decodeURIComponent(callbackError.replace(/\+/g, ' ')) : null
+  })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleEnabled, setGoogleEnabled] = useState<boolean | null>(null)
   const [resetSent, setResetSent] = useState(false)
-
-  useEffect(() => {
-    const callbackError = searchParams.get('error')
-    if (callbackError) {
-      setError(decodeURIComponent(callbackError.replace(/\+/g, ' ')))
-    }
-  }, [searchParams])
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

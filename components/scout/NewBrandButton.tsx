@@ -73,6 +73,9 @@ export function NewBrandButton() {
               value={pageId}
               onChange={(e) => setPageId(e.target.value)}
             />
+            <p className="text-[11px] text-muted-foreground">
+              Numbers only — found under the page&apos;s &quot;About&quot; tab on Facebook. Leave blank to search by name instead.
+            </p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>

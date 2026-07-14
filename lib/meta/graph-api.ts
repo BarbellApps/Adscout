@@ -1,5 +1,3 @@
-import { isMetaGraphConfigured } from '@/lib/meta/config'
-
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0'
 
 // Meta's ads_archive endpoint only reliably covers: (a) ads that reached
@@ -27,13 +25,12 @@ interface AdsArchiveResponse {
   paging?: { cursors?: { after?: string }; next?: string }
 }
 
-export async function searchAdsArchive(params: {
-  searchTerms?: string
-  pageId?: string
-  countries?: string[]
-}): Promise<AdsArchiveEntry[]> {
-  const accessToken = process.env.META_GRAPH_API_ACCESS_TOKEN!
+// Meta's "Invalid Page ID" error for search_page_ids — a stale, mistyped, or
+// wrong-object ID. Distinct from other 400s (bad token, malformed request)
+// which should still surface to the caller.
+const INVALID_PAGE_ID_SUBCODE = 2334021
 
+function buildQuery(accessToken: string, params: { searchTerms?: string; pageId?: string; countries?: string[] }) {
   const query = new URLSearchParams({
     access_token: accessToken,
     ad_type: 'ALL',
@@ -53,15 +50,56 @@ export async function searchAdsArchive(params: {
 
   if (params.searchTerms) query.set('search_terms', params.searchTerms)
   if (params.pageId) query.set('search_page_ids', JSON.stringify([params.pageId]))
+  return query
+}
 
-  const res = await fetch(`${GRAPH_API_BASE}/ads_archive?${query.toString()}`)
+export async function searchAdsArchive(params: {
+  searchTerms?: string
+  pageId?: string
+  countries?: string[]
+}): Promise<AdsArchiveEntry[]> {
+  const accessToken = process.env.META_GRAPH_API_ACCESS_TOKEN!
+
+  const res = await fetch(`${GRAPH_API_BASE}/ads_archive?${buildQuery(accessToken, params).toString()}`)
+
   if (!res.ok) {
     const body = await res.text()
+
+    // A bad stored page_id shouldn't hard-fail the whole sync when we also
+    // have a page name to search by — retry once on search_terms alone.
+    if (params.pageId && params.searchTerms) {
+      const parsed = safeParseJson(body)
+      if (parsed?.error?.error_subcode === INVALID_PAGE_ID_SUBCODE) {
+        const retryRes = await fetch(`${GRAPH_API_BASE}/ads_archive?${buildQuery(accessToken, { ...params, pageId: undefined }).toString()}`)
+        if (retryRes.ok) {
+          const retryJson = (await retryRes.json()) as AdsArchiveResponse
+          return retryJson.data ?? []
+        }
+      }
+    }
+
     throw new Error(`Meta Graph API error (${res.status}): ${body}`)
   }
 
   const json = (await res.json()) as AdsArchiveResponse
   return json.data ?? []
+}
+
+function safeParseJson(body: string): { error?: { error_subcode?: number } } | null {
+  try {
+    return JSON.parse(body)
+  } catch {
+    return null
+  }
+}
+
+/** Resolves a Page ID to a real, accessible Facebook Page, or null if it doesn't exist. */
+export async function resolvePageId(pageId: string): Promise<{ id: string; name: string } | null> {
+  const accessToken = process.env.META_GRAPH_API_ACCESS_TOKEN!
+  const res = await fetch(`${GRAPH_API_BASE}/${encodeURIComponent(pageId)}?fields=id,name&access_token=${accessToken}`)
+  if (!res.ok) return null
+  const json = await res.json()
+  return json?.id ? { id: json.id, name: json.name } : null
 }
 
 export function mapPlatform(publisherPlatforms?: string[]): 'facebook' | 'instagram' | 'tiktok' | 'other' {
