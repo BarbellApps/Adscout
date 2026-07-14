@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Radar, ExternalLink, Users, Globe, Link2, Flame } from 'lucide-react'
+import { ArrowLeft, Radar, Users, Globe, Link2, Flame } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { SyncBrandButton } from '@/components/scout/SyncBrandButton'
 import { EditPageIdButton } from '@/components/scout/EditPageIdButton'
+import { AdCard } from '@/components/scout/AdCard'
 import { createClient } from '@/lib/supabase/server'
 import { isMetaGraphConfigured } from '@/lib/meta/config'
 import { formatCompactNumber } from '@/lib/utils'
@@ -460,38 +461,7 @@ export default async function BrandDetailPage({
           <p className="text-sm font-medium text-foreground mb-3">All synced ads</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {rows.map((ad) => (
-              <Card key={ad.id}>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <Badge variant={ad.is_active ? 'default' : 'outline'}>{ad.is_active ? 'Active' : 'Inactive'}</Badge>
-                    {ad.runtime_days > 0 && <Badge variant="outline">{ad.runtime_days}d runtime</Badge>}
-                    {typeof ad.eu_total_reach === 'number' && <Badge variant="outline">{formatCompactNumber(ad.eu_total_reach)} reach</Badge>}
-                  </div>
-                  <p className="text-sm font-medium text-foreground">{ad.headline ?? 'Untitled ad'}</p>
-                  {ad.body_copy && (
-                    <p className="text-xs text-muted-foreground line-clamp-3">{ad.body_copy}</p>
-                  )}
-                  {(ad.hook || ad.angle) && (
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {ad.hook && <span className="text-[10px] rounded bg-primary/10 text-primary px-1.5 py-0.5">{ad.hook}</span>}
-                      {ad.angle && <span className="text-[10px] rounded bg-muted text-muted-foreground px-1.5 py-0.5">{ad.angle}</span>}
-                    </div>
-                  )}
-                  <p className="text-[11px] text-muted-foreground">
-                    First seen {new Date(ad.first_seen).toLocaleDateString()}
-                  </p>
-                  {ad.media_url && (
-                    <a
-                      href={ad.media_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline flex items-center gap-1 pt-1"
-                    >
-                      View on Meta Ad Library <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </CardContent>
-              </Card>
+              <AdCard key={ad.id} ad={ad} />
             ))}
           </div>
         </>
