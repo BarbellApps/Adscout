@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { NewBrandButton } from '@/components/scout/NewBrandButton'
 import { SyncBrandButton } from '@/components/scout/SyncBrandButton'
 import { RemoveBrandButton } from '@/components/scout/RemoveBrandButton'
+import { EditPageIdButton } from '@/components/scout/EditPageIdButton'
 import { createClient } from '@/lib/supabase/server'
 import { isMetaGraphConfigured } from '@/lib/meta/config'
 import { TIER_LIMITS } from '@/lib/utils/gates'
@@ -97,7 +98,14 @@ export default async function ScoutPage() {
                 <Link href={`/scout/${b.id}`} className="text-xs text-muted-foreground hover:text-primary block">
                   {b.ads?.[0]?.count ?? 0} ads synced &rarr;
                 </Link>
-                <SyncBrandButton brandId={b.id} metaConfigured={metaConfigured} />
+                {b.page_id ? (
+                  <SyncBrandButton brandId={b.id} metaConfigured={metaConfigured} />
+                ) : (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-amber-600">Needs a Page ID to sync accurately.</p>
+                    <EditPageIdButton brandId={b.id} pageName={b.page_name} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

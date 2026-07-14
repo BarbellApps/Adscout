@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,59 +15,45 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 
-export function NewBrandButton() {
+export function EditPageIdButton({ brandId, pageName }: { brandId: string; pageName: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [pageName, setPageName] = useState('')
   const [pageId, setPageId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleCreate() {
-    if (!pageName.trim() || !pageId.trim()) return
+  async function handleSave() {
+    if (!pageId.trim()) return
     setLoading(true)
     setError(null)
-    const res = await fetch('/api/brands', {
-      method: 'POST',
+    const res = await fetch(`/api/brands/${brandId}`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page_name: pageName, page_id: pageId }),
+      body: JSON.stringify({ page_id: pageId }),
     })
     setLoading(false)
     if (res.ok) {
-      setPageName('')
       setPageId('')
       setOpen(false)
       router.refresh()
     } else {
       const data = await res.json().catch(() => ({}))
-      setError(data.error ?? 'Failed to add brand')
+      setError(data.error ?? 'Failed to save')
     }
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger render={<Button size="sm" />}>
-        <Plus className="w-4 h-4" />
-        Track a brand
+      <SheetTrigger render={<Button size="xs" variant="outline" />}>
+        <Pencil className="w-3 h-3" />
+        Add Page ID
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Track a competitor brand</SheetTitle>
+          <SheetTitle>Add a Meta Page ID</SheetTitle>
+          <p className="text-xs text-muted-foreground">{pageName}</p>
         </SheetHeader>
         <div className="px-4 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="pageName">Page name</Label>
-            <Input
-              id="pageName"
-              placeholder="e.g. Gymshark"
-              value={pageName}
-              onChange={(e) => setPageName(e.target.value)}
-              autoFocus
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Just a label — this is what you&apos;ll see in your brand list.
-            </p>
-          </div>
           <div className="space-y-1.5">
             <Label htmlFor="pageId">Meta Page ID</Label>
             <Input
@@ -75,16 +61,20 @@ export function NewBrandButton() {
               placeholder="1234567890"
               value={pageId}
               onChange={(e) => setPageId(e.target.value)}
+              autoFocus
             />
             <p className="text-[11px] text-muted-foreground">
-              Required — numbers only, found under the page&apos;s &quot;Page Transparency&quot; section on Facebook. This is what actually scopes the sync to this one business; a name alone can&apos;t be, and pulls in unrelated advertisers.
+              Numbers only, found under the page&apos;s &quot;Page Transparency&quot; section on Facebook — search for {pageName} in the{' '}
+              <a href="https://www.facebook.com/ads/library" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Meta Ad Library
+              </a>, open the page, and look under About.
             </p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <SheetFooter>
-          <Button onClick={handleCreate} disabled={loading || !pageName.trim() || !pageId.trim()}>
-            {loading ? 'Adding…' : 'Add brand'}
+          <Button onClick={handleSave} disabled={loading || !pageId.trim()}>
+            {loading ? 'Saving…' : 'Save'}
           </Button>
         </SheetFooter>
       </SheetContent>

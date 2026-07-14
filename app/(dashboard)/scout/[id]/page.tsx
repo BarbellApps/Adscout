@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { SyncBrandButton } from '@/components/scout/SyncBrandButton'
+import { EditPageIdButton } from '@/components/scout/EditPageIdButton'
 import { createClient } from '@/lib/supabase/server'
 import { isMetaGraphConfigured } from '@/lib/meta/config'
 import type { Ad } from '@/types'
@@ -52,10 +53,20 @@ export default async function BrandDetailPage({
           </div>
           <p className="text-sm text-muted-foreground">{rows.length} ads synced from the Meta Ad Library</p>
         </div>
-        <SyncBrandButton brandId={brand.id} metaConfigured={metaConfigured} />
+        {brand.page_id ? (
+          <SyncBrandButton brandId={brand.id} metaConfigured={metaConfigured} />
+        ) : (
+          <EditPageIdButton brandId={brand.id} pageName={brand.page_name} />
+        )}
       </div>
 
-      {rows.length === 0 ? (
+      {!brand.page_id ? (
+        <EmptyState
+          icon={Radar}
+          title="Needs a Meta Page ID"
+          description="A page name alone can't be scoped to one business in the Meta Ad Library and will pull in unrelated advertisers. Add this brand's numeric Page ID to sync accurately."
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={Radar}
           title="No ads synced yet"

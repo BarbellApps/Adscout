@@ -53,9 +53,16 @@ export async function POST(req: Request) {
     )
   }
 
+  if (!brand.page_id) {
+    return NextResponse.json(
+      { error: 'This brand needs a Meta Page ID to sync accurately. Searching by name alone can\'t be scoped to one business and returns unrelated ads — edit the brand and add its numeric Page ID.' },
+      { status: 400 }
+    )
+  }
+
   let entries
   try {
-    entries = await searchAdsArchive({ searchTerms: brand.page_name, pageId: brand.page_id ?? undefined })
+    entries = await searchAdsArchive({ pageId: brand.page_id })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Meta Graph API request failed' },

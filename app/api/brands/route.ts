@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { resolvePageId } from '@/lib/meta/graph-api'
+import { validatePageId } from '@/lib/meta/graph-api'
 import { isMetaGraphConfigured } from '@/lib/meta/config'
 import { TIER_LIMITS } from '@/lib/utils/gates'
 import type { SubscriptionTier } from '@/types'
@@ -37,23 +37,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'page_name is required' }, { status: 400 })
   }
 
+  // Required, not optional: Scout sync only works against a real Page ID —
+  // Meta's search_terms is a broad keyword search across the whole ad
+  // library and returns unrelated advertisers, not a filter on one page.
   const trimmedPageId = typeof pageId === 'string' ? pageId.trim() : ''
-  if (trimmedPageId) {
-    if (!/^\d+$/.test(trimmedPageId)) {
-      return NextResponse.json(
-        { error: 'Meta Page ID must be numbers only (e.g. 1234567890) — not a URL or page name. Find it under the page\'s "About" tab, or leave it blank to search by name instead.' },
-        { status: 400 }
-      )
-    }
-    if (isMetaGraphConfigured()) {
-      const resolved = await resolvePageId(trimmedPageId)
-      if (!resolved) {
-        return NextResponse.json(
-          { error: `Meta Page ID ${trimmedPageId} doesn't match any accessible Facebook page. Double-check it, or leave it blank to search by name instead.` },
-          { status: 400 }
-        )
-      }
-    }
+  if (!trimmedPageId) {
+    return NextResponse.json(
+      { error: 'A Meta Page ID is required — find it under the page\'s "About" tab, or its "Page Transparency" section on Facebook.' },
+      { status: 400 }
+    )
+  }
+  const pageIdError = await validatePageId(trimmedPageId, isMetaGraphConfigured())
+  if (pageIdError) {
+    return NextResponse.json({ error: pageIdError }, { status: 400 })
   }
 
   const { data: profile } = await supabase
