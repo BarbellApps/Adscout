@@ -45,6 +45,7 @@ CREATE TABLE public.ads (
   first_seen TIMESTAMPTZ DEFAULT NOW(),
   last_seen TIMESTAMPTZ DEFAULT NOW(),
   runtime_days INT DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true,
   source TEXT DEFAULT 'manual_capture' CHECK (source IN ('graph_api', 'manual_capture', 'scraped')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

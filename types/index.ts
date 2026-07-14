@@ -41,6 +41,7 @@ export interface Ad {
   first_seen: string
   last_seen: string
   runtime_days: number
+  is_active: boolean
   source: AdSource
   created_at: string
 }

@@ -80,6 +80,8 @@ export async function POST(req: Request) {
     first_seen: entry.ad_delivery_start_time ?? new Date().toISOString(),
     last_seen: entry.ad_delivery_stop_time ?? new Date().toISOString(),
     runtime_days: runtimeDays(entry.ad_delivery_start_time, entry.ad_delivery_stop_time),
+    // Meta omits ad_delivery_stop_time for ads that are still running.
+    is_active: !entry.ad_delivery_stop_time,
     source: 'graph_api' as const,
   }))
 
