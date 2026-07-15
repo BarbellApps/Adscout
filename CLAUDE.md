@@ -8,6 +8,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Six product modules: **Templates**, **Scout** (competitor Meta-ad tracking), **Explore** (ad search), **Collections** (saveable boards), **AI Canvas** (credit-metered AI script generation), and a **Chrome Extension** (manual ad capture).
 
+## Who uses it and why
+
+The core user is a performance marketer / ecommerce brand / agency who currently does competitor research by manually browsing the Meta Ad Library and dumping screenshots into Slack. AdScout replaces that with a persistent, searchable, analyzed workspace. The jobs-to-be-done:
+
+- **"What are my competitors running right now, and what's working?"** → Scout tracks specific competitor Pages and surfaces their live ads with real reach/audience/targeting analytics.
+- **"Show me proven ad concepts in my niche."** → Templates (curated high-performers) and Explore (search the ad corpus).
+- **"Help me turn that inspiration into my own ad."** → AI Canvas generates scripts/hooks/angles; Collections organize saved references for a campaign or team.
+- **"Keep a copy even if the ad gets taken down."** → synced ad metadata/copy/analytics persist in the user's account (true creative-file preservation is pending the capture worker).
+
+## End-to-end workflow
+
+The primary loop runs through Scout:
+
+1. **Track a brand** — user searches a brand name in the "Track a brand" type-ahead (`searchAdvertiserPages` → Meta autocomplete), picks the exact business, which captures the real numeric Page ID. (Manual Page-ID entry is a fallback.)
+2. **Sync** — `/api/scout/sync` pulls that Page's EU-reaching ads from `ads_archive`, stores them with full DSA fields (reach, demographics, targeting, landing pages), and runs one batched Claude call to tag each ad's hook/angle/CTA.
+3. **Analyze** — the brand detail page (`/scout/[id]`) renders the intelligence dashboard: active-ad count, new-this-week, EU reach, ad-trend, platform mix, top hooks/angles, landing-page distribution, and per-ad audience breakdowns. Clicking an ad opens its per-ad analytics.
+4. **Save & act** — the user saves standout ads to Collections, then feeds them as inspiration into AI Canvas to generate their own creative. Explore and Templates are alternate top-of-funnel entry points into the same save→create flow.
+
+Tier gating shapes the journey: `free` sees Templates/Explore/Collections only; Scout and Canvas require `premium`/`pro` (see `lib/utils/gates.ts`).
+
 ## Commands
 
 ```bash
