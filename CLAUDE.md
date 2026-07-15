@@ -1,140 +1,84 @@
-# CLAUDE.md — AdScout
-# Project Bible for Claude Code
+# CLAUDE.md
 
----
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 1. PROJECT OVERVIEW
+## What this is
 
-**Product Name:** AdScout
-**Type:** B2B SaaS — AI-powered ad creative research & production platform
-**Category:** Competes directly with Konvert (usekonvert.com), Foreplay.co, PiPiADS, BigSpy, AdSpy
-**Target User:** Performance marketers, ecommerce brands, agencies, designers/editors, dropshippers
-**Goal:** Give users a single workspace to find proven ad concepts, monitor competitor ad accounts, and generate new ad creative with AI — replacing manual Meta Ad Library browsing + screenshot dumps in Slack.
+**AdScout** — a B2B SaaS ad-creative-intelligence platform in the same category as Konvert, Foreplay.co, PiPiADS, and BigSpy. It gives performance marketers, ecommerce brands, and agencies one workspace to track competitor ads, browse an ad-template library, search a corpus of live/historical ads, and generate new creative with AI.
 
-This product is an **own-branded** SaaS, not a Konvert reseller/whitelabel — differentiate on execution, pricing, and positioning where sensible, but the feature set below is intentionally close to category leaders since this is an established, proven market.
+Six product modules: **Templates**, **Scout** (competitor Meta-ad tracking), **Explore** (ad search), **Collections** (saveable boards), **AI Canvas** (credit-metered AI script generation), and a **Chrome Extension** (manual ad capture).
 
----
+## Commands
 
-## 2. CORE CONCEPT — SIX MODULES
+```bash
+npm run dev      # Next.js dev server (Turbopack)
+npm run build    # production build — always run before committing non-trivial changes
+npm run lint     # eslint (flat config, eslint-config-next). Zero-tolerance: CI/build treats lint errors as blocking
+```
 
-| Module | What It Does |
-|---|---|
-| **Templates** | Curated library of high-performing ad templates (target 5,000+, weekly refresh), filterable by industry/format, exportable to Canva/Figma. Curation criteria: 30+ day runtime, from a $10M+ brand, unique concept, or a strong hook/copy angle. |
-| **Scout** | 24/7 monitoring of specific competitor brands' Meta ad accounts — hooks, angles, landing pages, audiences, selling points, ad types, scaling vs. testing status. |
-| **Explore** | AI-powered search engine across a large indexed pool of live + historical ads, filterable by keyword/niche/format/runtime/platform. |
-| **Collections** | Save ads from Scout/Explore/the Chrome extension into shareable team boards. |
-| **AI Canvas** | Multi-model AI workspace (Claude + pluggable GPT/Gemini/Grok/image-gen adapters) for ad script generation, static ad variations, and adapting templates to a user's brand. Credit-metered, resets monthly per tier. |
-| **Chrome Extension** | One-click capture of any ad seen in-browser into Collections/Canvas. |
+There is **no test suite**. Verification is done by `npm run build` + `npm run lint` + real end-to-end checks against the live Supabase/Vercel deployment (see "Verifying against production" below).
 
----
+Database changes are applied by running SQL: `docs/schema.sql` is the canonical full schema (run in the Supabase SQL editor on a fresh project); incremental changes live in `docs/migrations/NNN_*.sql` and are idempotent (`ADD COLUMN IF NOT EXISTS`, `DROP POLICY IF EXISTS`). When you change the schema, update **both** the migration file and `docs/schema.sql`, and the `Ad`/`User`/etc. interfaces in `types/index.ts`.
 
-## 3. DATA SOURCING STRATEGY (read before touching Scout/Explore)
+## Next.js is unusual here
 
-**Decision on record: full scraper stack**, matching how the entire category actually operates.
+**Read `AGENTS.md`.** This project pins a Next.js version whose App-Router APIs may differ from training data (e.g. `params` is a `Promise` you must `await` in route handlers and pages). Before writing routing/rendering code, check the bundled docs in `node_modules/next/dist/docs/` rather than assuming. The `middleware` file convention is deprecated in favor of `proxy` (build warns about it).
 
-- Meta's official Graph API (`ads_archive`) only returns political/social-issue/housing/employment/credit ads, plus (per the EU Digital Services Act) **all** ads that reached the EU. It does **not** return an arbitrary US ecommerce competitor's ads.
-- Meta's public Ad Library **website** lets anyone search any advertiser Page and browse all of that Page's currently active ads worldwide, without login — this is the actual source Konvert/Foreplay/PiPiADS/BigSpy scrape for "all ads" competitor tracking.
-- Scraping that public web UI in an automated way is a **Meta ToS gray area** (publicly viewable data, but automated collection is against their terms; Meta actively rate-limits/blocks scraper traffic). Build this as an isolated, independently-killable service — never let scraper infrastructure or its failure modes touch the core app's reliability or the user's own credentials.
+## Architecture
 
-**Architecture implication:**
-- Keep the scraper worker fleet as a **separate service** (not in the Next.js app), so it can be rate-limited, proxied, monitored, and — if ever necessary — disabled without taking down the rest of the product.
-- Use the official Graph API wherever it legitimately applies (EU-reaching ads, political/social/housing/employment/credit categories globally) as the compliant baseline data source.
-- Layer the scraper on top for broader competitor/brand coverage (Scout) and the wider indexed corpus (Explore).
-- The Chrome extension's manual single-ad capture (user's own browser session, explicit user action) is a fundamentally different risk profile than bulk scraping — always keep it as a first-class, low-risk data path regardless of what happens with the scraper fleet.
+### Supabase client trichotomy (this matters constantly)
 
----
+There are **three** ways to talk to Supabase, and picking the wrong one is a recurring bug source:
 
-## 4. TECH STACK
+- `lib/supabase/server.ts` — cookie-scoped client for the logged-in user. Subject to RLS. Use in server components and most API routes for reads/writes the user is allowed to do.
+- `lib/supabase/client.ts` — browser client for client components (auth, realtime subscriptions).
+- `lib/supabase/admin.ts` (`createAdminClient`) — **service-role** client that bypasses RLS. Use only server-side, only for privileged writes the user's own role is (deliberately) not granted: Stripe webhook subscription updates, Canvas credit deduction, admin operations, and Scout ad-enrichment writes.
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Framework | Next.js (App Router) | TypeScript strict mode |
-| Styling | Tailwind CSS v4 + shadcn/ui | Framer Motion for micro-interactions |
-| DB / Auth | Supabase (Postgres + Realtime + Auth) | Realtime powers Canvas team collaboration |
-| AI orchestration | Anthropic Claude API (primary) | Adapter layer for OpenAI/GPT, Google/Gemini, xAI/Grok, and an image-gen model for static ad generation |
-| Billing | Stripe | Subscriptions + metered Canvas credits |
-| Scraper/indexing worker | Separate service (Fly.io/Railway), headless browser automation + rotating proxy pool | Isolated from the main app; own deploy/kill switch |
-| Chrome extension | MV3, separate package | Authenticated capture into Collections |
-| Design export | Canva Connect API / Figma REST API | "Open in Canva/Figma" |
-| Hosting | Vercel (web app) | Worker service hosted separately |
-| Email | Resend | Transactional |
+The `users` table is **locked down** (migration `001`): RLS allows a user to SELECT only their own row, and `authenticated` has **no INSERT/UPDATE/DELETE grant** on it. This closes a privilege-escalation hole (a `FOR ALL` policy previously let users PATCH their own `subscription_tier`/`is_admin`). Consequence: any write to `users` — including credit deduction — must go through `createAdminClient()`. RLS alone is not enough to expose a table through PostgREST; explicit `GRANT`s are also required (see the GRANTS block in `docs/schema.sql` — a whole class of "table unreachable" bugs came from missing grants).
 
----
+### Admin surface
 
-## 5. DATABASE SCHEMA (sketch — finalize in `docs/schema.sql`)
+`lib/admin.ts` `getAdminContext()` is the gate: it reads the caller's own `is_admin` flag (allowed by RLS) and, only if true, returns a service-role client. **Every** `/api/admin/*` route and the `/admin` page must call this and bail on `null` before touching other users' data. `is_admin` is bootstrapped via migration `001`; the middleware (`lib/supabase/middleware.ts`) protects `/admin` alongside the other dashboard routes.
 
-- `users` — same shape as a standard tiered SaaS user table (subscription_tier, stripe ids, etc.)
-- `brands` — tracked competitor pages for Scout (user_id, page_name/id, platform, added_at)
-- `ads` — normalized ad record: creative asset refs, copy, hook/angle/CTA tags, first_seen/last_seen, platform, runtime_days, `source` enum (`graph_api` | `manual_capture` | `scraped`)
-- `templates` — curated subset of `ads`, tagged industry/format, Canva/Figma doc links
-- `collections`, `collection_ads` — join table
-- `canvas_projects`, `canvas_generations` — model used, credits spent, output refs
-- `credit_ledger` — per-user Canvas credit balance/usage, resets monthly per Stripe tier
-- Enable Row Level Security on every table; gate features server-side by `subscription_tier`, never client-only.
+### Meta Graph API integration (`lib/meta/graph-api.ts`) — read before touching Scout
 
----
+This is the subtlest part of the codebase, and several shipped bugs originated here:
 
-## 6. SUBSCRIPTION TIERS (reference pricing — adjust before launch)
+- **We use the official `ads_archive` endpoint only.** It reliably returns (a) all EU-reaching ads (per the DSA), regardless of category, and (b) political/social/housing/employment/credit ads globally. For a typical EU DTC/ecommerce competitor this is enough; `DEFAULT_AD_REACHED_COUNTRIES` targets EU markets so a sync returns results.
+- **Sync scopes strictly by `search_page_ids` (a real numeric Page ID), never `search_terms`.** `search_terms` is a broad keyword search across the *entire* ad library and returns unrelated advertisers — syncing on it attributed a French romance-novel app's ads to a Dutch bag brand. There is intentionally **no keyword fallback** in the sync path.
+- **`search_terms` *is* used, but only for autocomplete** (`searchAdvertiserPages`): it surfaces distinct `(page_id, page_name)` candidates for a human to pick from — powering the "Track a brand" type-ahead — never to sync directly.
+- **Page-ID validation goes through `ads_archive`, not the `/{page-id}` node.** The generic page node requires `pages_read_engagement`/Page-Public-Content-Access, which our token does **not** have (it 403s even on valid IDs). `isValidPageId` instead calls `search_page_ids` and treats Meta's specific "Invalid Page ID" subcode (`2334021`) as the only real-negative.
+- Rich DSA fields (`eu_total_reach`, `target_ages/gender/locations`, `languages`, `age_country_gender_reach_breakdown`, landing-page captions) are pulled and stored per ad — these power Scout's real analytics. **Meta's public API does not expose spend or engagement rate for regular commercial ads**; do not fabricate them. Competitors model/estimate those; we deliberately show only real data.
+- `ad_snapshot_url` embeds our access token in the URL. It must never appear in page HTML. External "view on Meta" links use the public `facebook.com/ads/library/?id={external_id}` form; the tokened URL only flows through the authenticated redirect at `/api/ads/[id]/preview`. Note: Meta serves `X-Frame-Options: DENY` on that render page, so it cannot be iframed — true in-card creative thumbnails require a headless-browser capture worker (see below).
 
-| Tier | Monthly | Annual (per mo) | Includes |
-|---|---|---|---|
-| Starter | $49 | $24 | Templates, Explore, Collections, Chrome extension |
-| Premium | $79 | $39 | + Scout (10 brands), Canvas (500 credits/mo) |
-| Pro | $129 | $69 | + Scout (unlimited brands), Canvas (700 credits/mo) |
+### AI (Anthropic) usage
 
-No free trial planned initially (satisfaction-guarantee model, matching category norm) — revisit once conversion data exists.
+`lib/anthropic/client.ts` exposes a lazy singleton (`getAnthropicClient()`) so a missing key never breaks build-time, and `CANVAS_TEXT_MODEL` (`claude-sonnet-5`). Two AI surfaces:
+- **Canvas** (`lib/canvas.ts`, `lib/anthropic/prompts/canvas.ts`, `/api/canvas/generate`) — credit-metered user-facing script generation.
+- **Scout enrichment** (`lib/anthropic/enrich.ts`) — during a sync, one batched Claude call extracts hook/angle/CTA from real ad copy into the otherwise-empty `hook`/`angle`/`cta` columns. It is failure-safe (returns `[]` on any error) so enrichment never breaks a sync, and writes via the admin client.
 
----
+### Lazy-singleton pattern for external clients
 
-## 7. BUILD SEQUENCE
+Stripe (`lib/stripe/client.ts`) and Anthropic both use a lazy-getter singleton rather than instantiating at module load. This is deliberate: eager instantiation with an unset key breaks `next build`. Follow this pattern for any new SDK client.
 
-### Phase 1 — Foundation ✅ COMPLETE
-- [x] Next.js scaffold, TypeScript strict, Tailwind v4, shadcn/ui
-- [x] Supabase schema + RLS + auth (email/password + Google OAuth)
-- [x] Stripe tiers + feature gating (server-side)
-- [x] Dashboard shell: sidebar/nav, empty states per module
+### Feature gating
 
-### Phase 2 — Templates + Collections (compliant data only) ✅ COMPLETE
-- [x] Templates page — real Supabase query, no fabricated seed data (curation is a manual/editorial task, not automated)
-- [ ] Canva/Figma export integration (schema + UI links exist; no OAuth app registered yet)
-- [x] Collections CRUD + sharing
-- [x] Chrome extension v1 — manual single-ad capture (`extension/`)
+`lib/utils/gates.ts` `TIER_LIMITS` is the single source of truth for what each tier (`free`/`starter`/`premium`/`pro`) can do and its Canvas-credit allowance. Gate **at the API-route level**, not just UI. `lib/stripe/plans.ts` holds the Stripe price IDs and marketing copy per tier; the webhook (`/api/stripe/webhook`) syncs `subscription_tier`/`status` and resets Canvas credits on subscription events (via the admin client).
 
-### Phase 3 — AI Canvas — mostly complete
-- [x] Claude adapter (script/hook generation) — GPT/Gemini/Grok/image-gen adapters not started
-- [x] Script/hook generation prompts
-- [ ] Static ad variation generation (image model) — needs an image-gen provider + API key
-- [x] Credit ledger + Stripe metering (credits reset on checkout/subscription webhook events)
-- [x] Realtime team annotation (notes on generations via Supabase Realtime)
+### Scraper worker (`scraper-worker/`)
 
-### Phase 4 — Scout / Explore (full data expansion) — partial
-- [x] Brands CRUD + official Graph API integration (EU + political/social/housing/employment/credit baseline) — `/api/scout/sync`
-- [ ] Scraper worker service (`scraper-worker/`) — isolated project scaffolded (job runner, dedup/upsert path, Playwright wired to the real public Ad Library URL); the actual DOM extraction is an intentional stub — see its README for the remaining steps (selectors, proxies, rate limiting, CAPTCHA handling, a fresh ToS check before running for real)
-- [ ] Scout dashboard 7-view breakdown (Overview, Hooks, Landing Pages, Angles, Audiences, Selling Points, Ad Types) — currently a flat brand list with ad counts, not the full breakdown
-- [x] Explore keyword search over the `ads` table (basic — no niche/format/runtime filters yet)
+A **separate** Node project with its own `package.json`, deliberately isolated from the Next.js app so it can be rate-limited/proxied/killed without touching core-app reliability. Its DOM extraction is an intentional stub. Scraping Meta's public web UI is a ToS gray area; keep this code out of the main app's deploy/runtime path. The Chrome extension's single-ad manual capture (`/api/extension/capture`, API-key auth) is a different, low-risk data path and stays first-class regardless.
 
-### Phase 5 — Polish + Launch
-- [ ] Billing portal, onboarding flow
-- [ ] Error monitoring, mobile responsiveness audit
-- [ ] Custom domain, Vercel deploy
-- [ ] Beta invite system
+## Design system
 
----
+Light theme, Stripe-inspired. Tokens live in `app/globals.css` (`:root` custom properties + a `@theme inline` block that maps them to Tailwind v4 utilities — the mapping is required for shadcn primitives to work). Key values: background `#F7F8FA`, primary `#635BFF` (hover `#5147E5`), dark sidebar `#08111F`. Font is Geist Sans. The sidebar is a fixed 220px rail (`components/layout/Sidebar.tsx`); layout offsets in `app/(dashboard)/layout.tsx` depend on that width.
 
-## 8. CRITICAL RULES FOR CLAUDE CODE
+## Verifying against production
 
-1. TypeScript strict mode — no `any` types.
-2. All API calls (including AI, Stripe, scraper-triggered writes) go through server-side routes — never expose API keys client-side.
-3. Gate features server-side by subscription tier — never rely on UI-only gating.
-4. Supabase RLS enabled on all tables.
-5. Every API route returns structured errors.
-6. Every async UI action has a loading state — skeletons, not full-page spinners.
-7. Mobile-first design.
-8. No mock data in production — real API calls or clear empty states.
-9. Secrets only in `.env.local` / hosting provider env config, never hardcoded.
-10. Stream AI responses where possible to avoid timeouts.
-11. **Scraper worker code stays out of the main Next.js app's deploy/runtime path.** It is a separate service with its own repo folder, deploy target, and kill switch.
+The app is deployed to Vercel (`adscout-alpha.vercel.app`) against a real Supabase project. Because there are no automated tests, non-trivial changes are verified end-to-end: build + lint, then drive the real flow (often via Playwright with an injected `@supabase/ssr`-format session cookie, since Chromium in the sandbox can't complete the login form through the proxy). Schema/data fixes are applied to production directly via the Supabase Management API (`api.supabase.com/v1/projects/{ref}/database/query`) — raw Postgres TCP is not reachable through the sandbox proxy. Deploys use the pinned `vercel@54.20.1` CLI.
 
----
+## Non-obvious constraints
 
-*Seeded from research on usekonvert.com and comparable tools (Foreplay, PiPiADS, BigSpy). See project history for the full research writeup.*
+- **Don't fabricate data to match a mockup.** Repeatedly load-bearing in this project: if the official API can't back a widget (spend, engagement rate, audience estimates for non-EU ads), build only what's real and omit the rest rather than inventing plausible numbers. Misattributed/fake data is treated as worse than a missing feature.
+- Secrets (`.env.local`) are gitignored and hold real production keys — never commit them, never print service-role keys or tokens to visible output.
+- The Meta user access token is long-lived but expires (~60 days) with no refresh mechanism; it must be re-minted via Graph API Explorer and updated in Vercel env when it lapses.
